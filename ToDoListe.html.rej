@@ -1,0 +1,21 @@
+diff a/ToDoListe.html b/ToDoListe.html	(rejected hunks)
+@@ -6,6 +6,19 @@
+ <title>ToDoリスト</title>
+ 
+ <style>
++.developer{
++    position: fixed;
++    right: 15px;
++    bottom: 15px;
++    background: #2c3e50;
++    color: white;
++    padding: 12px;
++    border-radius: 10px;
++    box-shadow: 0 3px 8px rgba(0,0,0,0.3);
++    font-size: 13px;
++    text-align: center;
++}
++    
+ body{
+     font-family: Arial, sans-serif;
+     background:#f4f4f4;
