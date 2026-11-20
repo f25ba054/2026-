@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ToDoリスト</title>
+
+<style>
+body{
+    font-family: Arial, sans-serif;
+    background:#f4f4f4;
+    margin:20px;
+}
+
+.container{
+    max-width:1000px;
+    margin:auto;
+}
+
+h1{
+    text-align:center;
+}
+
+.dashboard{
+    display:flex;
+    gap:10px;
+    margin-bottom:20px;
+}
+
+.card{
+    flex:1;
+    background:white;
+    padding:15px;
+    border-radius:10px;
+    text-align:center;
+    box-shadow:0 2px 5px rgba(0,0,0,0.2);
+}
+
+.form-area, .search-area{
+    background:white;
+    padding:15px;
+    margin-bottom:20px;
+    border-radius:10px;
+}
+
+input, select{
+    padding:8px;
+    margin:5px;
+}
+
+button{
+    padding:8px 12px;
+    cursor:pointer;
+}
+
+.task{
+    background:white;
+    margin-bottom:10px;
+    padding:10px;
+    border-radius:10px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+}
+
+.completed{
+    text-decoration:line-through;
+    color:gray;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+    <h1>ToDoリスト</h1>
+
+    <div class="dashboard">
+        <div class="card">
+            <h2 id="total">0</h2>
+            <p>総タスク数</p>
+        </div>
+
+        <div class="card">
+            <h2 id="completedCount">0</h2>
+            <p>完了数</p>
+        </div>
+
+        <div class="card">
+            <h2 id="remaining">0</h2>
+            <p>未完了</p>
+        </div>
+
+        <div class="card">
+            <h2 id="rate">0%</h2>
+            <p>完了率</p>
+        </div>
+    </div>
+
+    <div class="form-area">
+
+        <input type="text" id="title" placeholder="タスク名">
+
+        <select id="category">
+            <option>学校</option>
+            <option>仕事</option>
+            <option>私生活</option>
+        </select>
+
+        <button onclick="addTask()">追加</button>
+
+    </div>
+
+    <div class="search-area">
+
+        <input type="text"
+               id="search"
+               placeholder="検索"
+               onkeyup="renderTasks()">
+
+        <select id="filter"
+                onchange="renderTasks()">
+
+            <option value="all">すべて</option>
+            <option value="学校">学校</option>
+            <option value="仕事">仕事</option>
+            <option value="私生活">私生活</option>
+
+        </select>
+
+    </div>
+
+    <div id="taskList"></div>
+
+</div>
+
+<script>
+
+let tasks = JSON.parse(localStorage.getItem("tasks")) || [];
+
+function saveTasks(){
+    localStorage.setItem(
+        "tasks",
+        JSON.stringify(tasks)
+    );
+}
+
+function addTask(){
+
+    const title =
+        document.getElementById("title").value;
+
+    const category =
+        document.getElementById("category").value;
+
+    if(title.trim()===""){
+        alert("タスク名を入力してください");
+        return;
+    }
+
+    tasks.push({
+        id: Date.now(),
+        title: title,
+        category: category,
+        completed: false
+    });
+
+    document.getElementById("title").value="";
+
+    saveTasks();
+    renderTasks();
+}
+
+function toggleTask(id){
+
+    const task =
+        tasks.find(t => t.id===id);
+
+    task.completed = !task.completed;
+
+    saveTasks();
+    renderTasks();
+}
+
+function deleteTask(id){
+
+    tasks =
+        tasks.filter(t => t.id!==id);
+
+    saveTasks();
+    renderTasks();
+}
+
+function editTask(id){
+
+    const task =
+        tasks.find(t => t.id===id);
+
+    const newTitle =
+        prompt("新しいタスク名",task.title);
+
+    if(newTitle){
+
+        task.title = newTitle;
+
+        saveTasks();
+        renderTasks();
+    }
+}
+
+function renderTasks(){
+
+    const keyword =
+        document.getElementById("search").value.toLowerCase();
+
+    const filter =
+        document.getElementById("filter").value;
+
+    let result = tasks.filter(task=>{
+
+        const matchTitle =
+            task.title.toLowerCase()
+            .includes(keyword);
+
+        const matchCategory =
+            filter==="all" ||
+            task.category===filter;
+
+        return matchTitle &&
+               matchCategory;
+    });
+
+    const taskList =
+        document.getElementById("taskList");
+
+    taskList.innerHTML="";
+
+    result.forEach(task=>{
+
+        taskList.innerHTML += `
+            <div class="task">
+                <div>
+                    <input
+                       type="checkbox"
+                       ${task.completed ? "checked":""}
+                       onchange="toggleTask(${task.id})">
+
+                    <span class="${
+                        task.completed ? "completed":""
+                    }">
+                        ${task.title}
+                    </span>
+
+                    <small>
+                        [${task.category}]
+                    </small>
+                </div>
+
+                <div>
+                    <button onclick="editTask(${task.id})">
+                        編集
+                    </button>
+
+                    <button onclick="deleteTask(${task.id})">
+                        削除
+                    </button>
+                </div>
+            </div>
+        `;
+    });
+
+    updateDashboard();
+}
+
+function updateDashboard(){
+
+    const total = tasks.length;
+
+    const completed =
+        tasks.filter(t=>t.completed).length;
+
+    const remaining =
+        total - completed;
+
+    const rate =
+        total===0
+        ? 0
+        : Math.round(completed/total*100);
+
+    document.getElementById("total")
+            .textContent = total;
+
+    document.getElementById("completedCount")
+            .textContent = completed;
+
+    document.getElementById("remaining")
+            .textContent = remaining;
+
+    document.getElementById("rate")
+            .textContent = rate + "%";
+}
+
+renderTasks();
+
+</script>
+
+</body>
+</html>
